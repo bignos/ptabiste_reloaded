@@ -1,0 +1,28 @@
+key_trigger {
+  input: KEY_SPACE
+  action: "player_jump"
+}
+key_trigger {
+  input: KEY_F
+  action: "toggle_fullscreen"
+}
+key_trigger {
+  input: KEY_ESC
+  action: "exit"
+}
+key_trigger {
+  input: KEY_UP
+  action: "menu_up"
+}
+key_trigger {
+  input: KEY_DOWN
+  action: "menu_down"
+}
+key_trigger {
+  input: KEY_ENTER
+  action: "menu_validate"
+}
+mouse_trigger {
+  input: MOUSE_BUTTON_1
+  action: "touch"
+}

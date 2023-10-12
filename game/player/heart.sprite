@@ -1,0 +1,4 @@
+tile_set: "/game/player/heart.tilesource"
+default_animation: "active"
+material: "/builtins/materials/sprite.material"
+blend_mode: BLEND_MODE_ALPHA

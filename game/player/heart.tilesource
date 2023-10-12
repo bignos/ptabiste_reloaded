@@ -1,0 +1,28 @@
+image: "/images/Heart.png"
+tile_width: 314
+tile_height: 261
+tile_margin: 0
+tile_spacing: 50
+collision: ""
+material_tag: "tile"
+animations {
+  id: "active"
+  start_tile: 1
+  end_tile: 1
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 1
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+animations {
+  id: "inactive"
+  start_tile: 2
+  end_tile: 2
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 1
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+extrude_borders: 2
+inner_padding: 0
+sprite_trim_mode: SPRITE_TRIM_MODE_OFF

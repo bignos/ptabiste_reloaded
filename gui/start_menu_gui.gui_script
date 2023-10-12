@@ -1,0 +1,91 @@
+local function load_game()
+	local controller_url = "main:/controller#handler"
+	msg.post(controller_url, "load_game")
+end
+
+local function exit_program()
+    msg.post("@system:", "exit", { code = 0 })
+end
+
+function set_focus(self, name)
+	local label_id = gui.get_node("label_" .. name)
+    local box_label_id = gui.get_node("box_label_" .. name)
+    gui.set_alpha(box_label_id, self.focus_alpha)
+	gui.set_color(label_id, self.focus_color)
+	self.menu_focus = name
+end
+
+function change_focus(self)
+	local label_play_id = gui.get_node("label_play")
+	local label_exit_id = gui.get_node("label_exit")
+    local box_label_play_id = gui.get_node("box_label_play")
+    local box_label_exit_id = gui.get_node("box_label_exit")
+	if self.menu_focus == "play" then
+		gui.set_color(label_play_id, self.original_color)
+        gui.set_alpha(box_label_play_id, self.original_box_alpha)
+		set_focus(self, "exit")
+	else
+		gui.set_color(label_exit_id, self.original_color)
+        gui.set_alpha(box_label_exit_id, self.original_box_alpha)
+		set_focus(self, "play")
+	end
+end
+
+function init(self)
+	-- Add initialization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+	local label_play_id = gui.get_node("label_play")
+    local box_label_play_id = gui.get_node("box_label_play")
+	self.original_color = gui.get_color(label_play_id)
+	self.focus_color = vmath.vector4(0.1, 0.8, 0.8, 1)
+	self.original_box_alpha = gui.get_alpha(box_label_play_id)
+    self.focus_alpha = 0.6
+	set_focus(self, "play")
+end
+
+function final(self)
+	-- Add finalization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function update(self, dt)
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+	-- Add message-handling code here
+	-- Learn more: https://defold.com/manuals/message-passing/
+	-- Remove this function if not needed
+
+	if message_id == hash("menu_validate") then
+		if self.menu_focus == "play" then
+			load_game()
+        elseif self.menu_focus == "exit" then
+            exit_program()
+		end
+	elseif message_id == hash("menu_up") or message_id == hash("menu_down") then
+		change_focus(self)
+	end
+end
+
+function on_input(self, action_id, action)
+	-- Add input-handling code here. The game object this script is attached to
+	-- must have acquired input focus:
+	--
+	--    msg.post(".", "acquire_input_focus")
+	--
+	-- All mapped input bindings will be received. Mouse and touch input will
+	-- be received regardless of where on the screen it happened.
+	-- Learn more: https://defold.com/manuals/input/
+	-- Remove this function if not needed
+end
+
+function on_reload(self)
+	-- Add reload-handling code here
+	-- Learn more: https://defold.com/manuals/hot-reload/
+	-- Remove this function if not needed
+end

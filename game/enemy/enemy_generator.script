@@ -1,0 +1,110 @@
+local ENEMY_LIST = { "rock", "zombi", "eyeball", "raven" }
+
+function does_object_exist(id)
+	return pcall(function(id)
+		go.get_position(id)
+	end, id) == true
+end
+
+function remove_game_object(self, url, _)
+	go.delete(url)
+end
+
+function create_enemy(self, name, speed)
+	local enemy_id = factory.create("#" .. name .. "_factory")
+	local enemy_url = msg.url(nil, enemy_id, "enemy")
+	local enemy_width = go.get(enemy_url, "size.x") * go.get(enemy_url, "scale.x")
+
+	table.insert(self.components_ids, enemy_id)
+	go.animate(
+		enemy_id,
+		"position.x",
+		go.PLAYBACK_ONCE_FORWARD,
+		-enemy_width,
+		go.EASING_LINEAR,
+		100 / speed,
+		0,
+		remove_game_object
+	)
+	if name == "raven" then
+		go.animate(enemy_id, "position.y", go.PLAYBACK_LOOP_PINGPONG, 60, go.EASING_LINEAR, 40 / speed)
+	end
+end
+
+function generate_enemy(self, _, _)
+	local random_do_something = math.random(1, 3)
+	if random_do_something == 2 then
+		local random_speed = math.random(30, 80)
+		local random_index = math.random(1, #ENEMY_LIST)
+		create_enemy(self, ENEMY_LIST[random_index], random_speed)
+	end
+end
+
+function more_difficult(self, _, _)
+    timer.cancel(self.timer)
+    self.difficulty = self.difficulty + 1
+    local speed = 1 - (self.difficulty/20)
+	self.timer = timer.delay(speed, true, generate_enemy)
+end
+
+function init(self)
+	math.randomseed(os.time())
+	self.components_ids = {}
+    self.difficulty = 1
+	self.timer = timer.delay(1, true, generate_enemy)
+	self.timer_difficulty = timer.delay(10, true, more_difficult)
+end
+
+function final(self)
+	-- Add finalization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function update(self, dt)
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function fixed_update(self, dt)
+	-- This function is called if 'Fixed Update Frequency' is enabled in the Engine section of game.project
+	-- Can be coupled with fixed updates of the physics simulation if 'Use Fixed Timestep' is enabled in
+	-- Physics section of game.project
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+	-- Add message-handling code here
+	-- Learn more: https://defold.com/manuals/message-passing/
+	-- Remove this function if not needed
+	if message_id == hash("pause") then
+		for index, id in ipairs(self.components_ids) do
+			if does_object_exist(id) then
+				go.cancel_animations(id, "position.x")
+			else
+				table.remove(self.components_ids, index)
+			end
+		end
+	end
+end
+
+function on_input(self, action_id, action)
+	-- Add input-handling code here. The game object this script is attached to
+	-- must have acquired input focus:
+	--
+	--    msg.post(".", "acquire_input_focus")
+	--
+	-- All mapped input bindings will be received. Mouse and touch input will
+	-- be received regardless of where on the screen it happened.
+	-- Learn more: https://defold.com/manuals/input/
+	-- Remove this function if not needed
+end
+
+function on_reload(self)
+	-- Add reload-handling code here
+	-- Learn more: https://defold.com/manuals/hot-reload/
+	-- Remove this function if not needed
+end

@@ -1,0 +1,78 @@
+function init(self)
+	-- Add initialization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+	msg.post(".", "acquire_input_focus")
+    
+    self.width = go.get("background#background", "size.x")
+    self.final_position = -(self.width-1280)
+
+    go.animate("/background", "position.x", go.PLAYBACK_LOOP_PINGPONG, self.final_position, go.EASING_LINEAR, 120)
+    go.animate("/background", "position.y", go.PLAYBACK_LOOP_PINGPONG, -40, go.EASING_LINEAR, 10)
+
+    sound.play("/music#menu_music")
+end
+
+function final(self)
+	-- Add finalization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+	msg.post(".", "release_input_focus")
+end
+
+function update(self, dt)
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function fixed_update(self, dt)
+	-- This function is called if 'Fixed Update Frequency' is enabled in the Engine section of game.project
+	-- Can be coupled with fixed updates of the physics simulation if 'Use Fixed Timestep' is enabled in
+	-- Physics section of game.project
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+	-- Add message-handling code here
+	-- Learn more: https://defold.com/manuals/message-passing/
+	-- Remove this function if not needed
+end
+
+function on_input(self, action_id, action)
+	-- Add input-handling code here. The game object this script is attached to
+	-- must have acquired input focus:
+	--
+	--    msg.post(".", "acquire_input_focus")
+	--
+	-- All mapped input bindings will be received. Mouse and touch input will
+	-- be received regardless of where on the screen it happened.
+	-- Learn more: https://defold.com/manuals/input/
+	-- Remove this function if not needed
+	local gui_script_url = "#start_menu_gui"
+
+	if action_id == hash("player_jump") and action.pressed then
+		local controller_url = "main:/controller#handler"
+		msg.post(controller_url, "load_game")
+	elseif action_id == hash("menu_up") and action.pressed then
+		msg.post(gui_script_url, "menu_up")
+	elseif action_id == hash("menu_down") and action.pressed then
+		msg.post(gui_script_url, "menu_down")
+	elseif action_id == hash("menu_validate") and action.pressed then
+		msg.post(gui_script_url, "menu_validate")
+	elseif action_id == hash("toggle_fullscreen") and action.pressed then
+		-- When fullscreen, mouse cursor is hidden
+		defos.toggle_fullscreen()
+		defos.set_cursor_visible(defos.is_fullscreen())
+	elseif action_id == hash("exit") and action.pressed then
+		msg.post("@system:", "exit", { code = 0 })
+	end
+end
+
+function on_reload(self)
+	-- Add reload-handling code here
+	-- Learn more: https://defold.com/manuals/hot-reload/
+	-- Remove this function if not needed
+end

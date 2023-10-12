@@ -1,0 +1,4 @@
+tile_set: "/game/player/player.tilesource"
+default_animation: "player_walk"
+material: "/builtins/materials/sprite.material"
+blend_mode: BLEND_MODE_ALPHA

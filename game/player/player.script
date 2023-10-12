@@ -1,0 +1,203 @@
+function jump(self)
+	local jump_duration = 1.4
+	local jump_hight = 700
+
+	self.state = "jump"
+	sound.play("#jump_sound")
+	go.animate(
+		go.get_id(),
+		"position.y",
+		go.PLAYBACK_ONCE_PINGPONG,
+		jump_hight,
+		go.EASING_OUTSINE,
+		jump_duration,
+		0,
+		finish_jump
+	)
+	go.animate(go.get_id(), "euler.z", go.PLAYBACK_ONCE_FORWARD, -360, go.EASING_OUTSINE, jump_duration)
+end
+
+function finish_jump(self, _, _)
+	self.state = "walk"
+	go.set(go.get_id(), "euler.z", 0)
+end
+
+function hit_animation_finish(self, _, _)
+	self.hit = false
+end
+
+function update_score(self, _, _)
+	self.score = self.score + (10 * self.score_factor)
+	msg.post("/gui#game_gui", "update_score", { score = self.score })
+end
+
+function player_hit(self)
+	if not self.hit then
+		msg.post("/heart#heart", "remove_heart")
+		self.heart = self.heart - 1
+		if self.heart ~= 0 then
+			go.animate(
+				"#player",
+				"tint",
+				go.PLAYBACK_ONCE_PINGPONG,
+				vmath.vector4(1, 0, 0, 1),
+				go.EASING_LINEAR,
+				0.6,
+				0,
+				hit_animation_finish
+			)
+			sound.play("#hit_sound")
+			self.hit = true
+		else
+			game_over(self)
+		end
+	end
+end
+
+function game_over(self)
+	self.state = "dead"
+	timer.cancel(self.timer)
+	sound.play("#game_over_sound")
+
+	go.animate(go.get_id(), "position.y", go.PLAYBACK_ONCE_FORWARD, 800, go.EASING_LINEAR, 1, 0, finish_game_over)
+	go.animate(go.get_id(), "position.x", go.PLAYBACK_ONCE_FORWARD, -40, go.EASING_LINEAR, 1)
+	go.set(go.get_id(), "euler.z", 0)
+	go.animate(go.get_id(), "euler.z", go.PLAYBACK_LOOP_FORWARD, -360, go.EASING_OUTSINE, 1)
+end
+
+function finish_game_over(self, _, _)
+	msg.post("/gui#game_gui", "game_over")
+	sound.stop("/music#loop_music")
+end
+
+function return_to_menu()
+	local controller_url = "main:/controller#handler"
+	msg.post(controller_url, "load_menu")
+end
+
+function get_bonus_type(id)
+	local sprite_url = msg.url(nil, id, "bonus")
+	local bonus = string.gsub(tostring(go.get(sprite_url, "animation")), ".*%[(%w+)_.*%]", "%1")
+	return bonus
+end
+
+function add_heart(self)
+	local max_heart = go.get("/heart#heart", "total_heart")
+	if self.heart ~= max_heart then
+		self.heart = self.heart + 1
+		msg.post("/heart#heart", "add_heart")
+	end
+end
+
+function add_score(self)
+    self.score_factor = self.score_factor + 1
+end
+
+function add_lucky(self)
+    local max_bonus = #self.bonus_list
+    local random_bonus_index = math.random(2, max_bonus)
+    local function_to_run = "add_" .. self.bonus_list[random_bonus_index] .. "(self)"
+    local choice = self.bonus_list[random_bonus_index]
+    if choice == "heart" then
+        add_heart(self)
+    elseif choice == "score" then
+        add_score(self)
+    end
+end
+
+function play_bonus_animation()
+    particlefx.play("#bonus_gain")
+    sound.play("#bonus_sound")
+end
+
+function init(self)
+	-- Add initialization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+	msg.post(".", "acquire_input_focus")
+    msg.post("/bonus_generator#bonus_generator", "get_bonus_list")
+
+	self.state = "walk"
+	self.heart = go.get("/heart#heart", "total_heart")
+	self.hit = false
+	self.score = 0
+    self.score_factor = 1
+	self.timer = timer.delay(1, true, update_score)
+    self.bonus_list = {}
+
+	sound.play("/music#loop_music")
+end
+
+function final(self)
+	-- Add finalization code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function update(self, dt)
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function fixed_update(self, dt)
+	-- This function is called if 'Fixed Update Frequency' is enabled in the Engine section of game.project
+	-- Can be coupled with fixed updates of the physics simulation if 'Use Fixed Timestep' is enabled in
+	-- Physics section of game.project
+	-- Add update code here
+	-- Learn more: https://defold.com/manuals/script/
+	-- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+	-- Add message-handling code here
+	-- Learn more: https://defold.com/manuals/message-passing/
+	-- Remove this function if not needed
+	if message_id == hash("collision_response") and self.status ~= "dead" then
+		if message.group == hash("enemy") then
+			player_hit(self)
+		elseif message.group == hash("bonus") then
+			local bonus = get_bonus_type(message.other_id)
+            play_bonus_animation(self)
+			if bonus == "heart" then
+				add_heart(self)
+            elseif bonus == "score" then
+                add_score(self)
+            elseif bonus == "lucky" then
+                add_lucky(self)
+			end
+		end
+    elseif message_id == hash("send_bonus_list") then
+        self.bonus_list = message
+	end
+end
+
+function on_input(self, action_id, action)
+	-- Add input-handling code here. The game object this script is attached to
+	-- must have acquired input focus:
+	--
+	--    msg.post(".", "acquire_input_focus")
+	--
+	-- All mapped input bindings will be received. Mouse and touch input will
+	-- be received regardless of where on the screen it happened.
+	-- Learn more: https://defold.com/manuals/input/
+	-- Remove this function if not needed
+	if self.state == "walk" and action_id == hash("player_jump") and action.pressed then
+		jump(self)
+	elseif action_id == hash("toggle_fullscreen") and action.pressed then
+		-- When fullscreen, mouse cursor is hidden
+		defos.toggle_fullscreen()
+		defos.set_cursor_visible(defos.is_fullscreen()) -- Inverted condition because the toggle is not imediate
+	elseif action_id == hash("touch") and action.pressed then
+		local receiver_url = msg.url("game", "/generator", "enemy_generator")
+		msg.post(receiver_url, "pause")
+	elseif self.state ~= "dead" and action_id == hash("exit") and action.pressed then
+		return_to_menu()
+	end
+end
+
+function on_reload(self)
+	-- Add reload-handling code here
+	-- Learn more: https://defold.com/manuals/hot-reload/
+	-- Remove this function if not needed
+end
